@@ -1,30 +1,27 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react';
+import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
+import SignUpAsVeterinary from './SignUpAsVeterinary';
 
 function App() {
-
-  const [backendData, setBackendData] = useState([{}])
-
-  useEffect(() => {
-    fetch("/api").then(
-      response => response.json()
-    ).then(
-      data => {
-        setBackendData(data)
-      }
-    )
-  }, [])
-
   return (
-    <div>
-      {(typeof backendData.users === 'undefined') ? (
-        <p>Loading</p>
-      ): (
-        backendData.users.map((user, i) => (
-          <p key={i}>{user}</p>
-        ))
-      )}
-    </div>
-  )
+    <Router>
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/signup">Sign up as veterinary</Link>
+            </li>
+          </ul>
+        </nav>
+        <Routes>
+          <Route exact path="/signup" element={<SignUpAsVeterinary />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
 export default App
