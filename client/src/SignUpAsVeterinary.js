@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function SignUpAsVeterinary() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState('');
   const [message, setMessage] = useState("");
+
+  const navigate = useNavigate();
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -29,9 +32,15 @@ function SignUpAsVeterinary() {
       },
       body: JSON.stringify(data)
     })
-    .then(response => response.text())
+    .then(response => response.json())
     .then(data => {
-      setMessage(data); // Set the response message to display to the user.
+        // Handle the server response
+        if (data.success) {
+            // If sign-up is successful, redirect to the Veterinary Dashboard
+            navigate('/dashboard', { state: { username: username,  veterinaireId: data.veterinaireId } });
+        } else {
+            setMessage('Failed to create an account. Please try again later.');
+        }
     })
     .catch(error => {
       setMessage("Error occurred during account creation.");

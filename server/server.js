@@ -13,16 +13,21 @@ const db = mysql.createPool({
     database: 'db_pawnation'
 });
 
-app.get("/", (req, res) => {
-    const sqlInsert = "INSERT INTO abonnement (abonnement_tarif, abonnement_date_prelevement, abonnement_paye) VALUES ('100', '01/01/2023', '0');"
-    db.query(sqlInsert, (err, result) => {
-        res.send("hello");
-    })
-})
-
-app.get("/api", (req, res) => {
-    res.json({ "users": ["userOne", "userTwo", "userThree", "userFour"] })
-})
+app.get('/abonnements', (req, res) => {
+    // Query to retrieve existing abonnements
+    const sqlSelectAbonnements = 'SELECT abonnement_id, abonnement_name, abonnement_tarif FROM abonnement';
+  
+    // Execute the query
+    db.query(sqlSelectAbonnements, (err, results) => {
+      if (err) {
+        console.error('Error fetching existing abonnements:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+  
+      // Send the abonnements data as a JSON response
+      res.json(results);
+    });
+});
 
 // Route for Veterinary Sign Up Page
 app.get("/signup", (req, res) => {
@@ -54,8 +59,8 @@ app.post("/signup", (req, res) => {
 
         // Proceed to insert data into the "veterinaire" table
         const sqlInsertVeterinaire = `
-            INSERT INTO veterinaire (id_compte, veterinaire_description, veterinaire_tarif, veterinaire_duree, id_abonnement)
-            VALUES (?, '', 0, 0, (SELECT abonnement_id FROM abonnement WHERE abonnement_tarif = 0 LIMIT 1))
+            INSERT INTO veterinaire (id_compte, veterinaire_description, veterinaire_tarif, veterinaire_duree)
+            VALUES (?, '', 0, 0)
         `;
         // Replace 'other_field' with the actual name of the field you want to insert in the "veterinaire" table
         db.query(sqlInsertVeterinaire, [compteId,], (err, result) => {
@@ -64,11 +69,49 @@ app.post("/signup", (req, res) => {
                 return res.status(500).json({ error: 'Database error' });
             }
 
+            const veterinaireId = result.insertId
+
             // Database insertion into the "veterinaire" table successful
             console.log('Data inserted into the "veterinaire" table.');
-            res.json({ success: true });
+            res.json({ success: true, veterinaireId: veterinaireId });
         });
     });
 });
+
+// Route to handle saving additional information from Veterinary Dashboard
+app.post('/save-veterinary-info', (req, res) => {
+    const { id, description, tarif, duree } = req.body;
+  
+    // Check if the required properties are defined
+    if (!id || !description || !tarif || !duree) {
+        return res.status(400).json({ error: 'Missing required data' });
+    }
+
+    // Perform database update or insertion
+    const sqlUpdate = `
+        UPDATE veterinaire
+        SET veterinaire_description = ?, veterinaire_tarif = ?, veterinaire_duree = ?
+        WHERE veterinaire_id = ?
+    `;
+    // Execute the update query
+    db.query(sqlUpdate, [description, tarif, duree, id], (err, result) => {
+        if (err) {
+            console.error('Error updating data in the database:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        // If no rows were updated, it means the record does not exist, so insert a new row
+        if (result.affectedRows === 0) {
+            // Database update unsuccessful
+            console.log('Data not updated in the "veterinaire" table.');
+            res.json({ success: false });
+        } else {
+            // Database update successful
+            console.log('Data updated in the "veterinaire" table.');
+            res.json({ success: true });
+        }
+    });
+});
+  
 
 app.listen(5000, () => { console.log("Server started on port 5000") })

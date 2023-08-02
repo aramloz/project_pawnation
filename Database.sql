@@ -15,13 +15,15 @@ CREATE TABLE db_pawnation.compte (
 -- Création tableau "abonnement"
 CREATE TABLE db_pawnation.abonnement (
   abonnement_id INT NOT NULL AUTO_INCREMENT,
+  abonnement_name VARCHAR(255) NOT NULL,
   abonnement_tarif DECIMAL(10,2) NOT NULL,
-  abonnement_date_prelevement DATE NOT NULL,
-  abonnement_paye BOOLEAN NOT NULL,
   PRIMARY KEY (abonnement_id)
 );
 
-INSERT INTO abonnement (abonnement_tarif, abonnement_date_prelevement, abonnement_paye) VALUES (0, '0000-01-01', 0);
+INSERT INTO abonnement (abonnement_name, abonnement_tarif) VALUES ('Plan A', 30);
+INSERT INTO abonnement (abonnement_name, abonnement_tarif) VALUES ('Plan B', 50);
+INSERT INTO abonnement (abonnement_name, abonnement_tarif) VALUES ('Plan C', 75);
+INSERT INTO abonnement (abonnement_name, abonnement_tarif) VALUES ('Plan D', 100);
 
 -- Création tableau "veterinaire"
 CREATE TABLE db_pawnation.veterinaire (
@@ -30,7 +32,9 @@ CREATE TABLE db_pawnation.veterinaire (
   veterinaire_description VARCHAR(255) NOT NULL,
   veterinaire_tarif DECIMAL(10,2) NOT NULL,
   veterinaire_duree TIME NOT NULL,
-  id_abonnement INT NOT NULL,
+  id_abonnement INT,
+  abonnement_date_prelevement DATE,
+  abonnement_paye BOOLEAN,
   PRIMARY KEY (veterinaire_id),
   FOREIGN KEY (id_compte) REFERENCES db_pawnation.compte(compte_id),
   FOREIGN KEY (id_abonnement) REFERENCES db_pawnation.abonnement(abonnement_id)
