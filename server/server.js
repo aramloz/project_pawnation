@@ -112,6 +112,122 @@ app.post('/save-veterinary-info', (req, res) => {
         }
     });
 });
+
+// Route to handle user login
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
   
+    // Check if the required properties are defined
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Missing required data' });
+    }
+  
+    // Perform database query to check username and password
+    const sqlSelectUser = 'SELECT * FROM compte WHERE compte_email = ? AND compte_password = ?';
+    db.query(sqlSelectUser, [username, password], (err, results) => {
+      if (err) {
+        console.error('Error fetching user data from the database:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+  
+      if (results.length === 0) {
+        // No matching user found
+        res.json({ success: false, error: 'Invalid username or password' });
+      } else {
+        // User found, login successful
+        const user = results[0];
+
+        if (user.compte_type === 1) {
+            const sqlSelectVet = `
+                SELECT veterinaire_id FROM veterinaire WHERE id_compte = ?
+            `;
+            db.query(sqlSelectVet, [user.compte_id,], (err, results) => {
+                if (err) {
+                    console.error('Error fetching user data from the veterinaire table:', err);
+                    return res.status(500).json({ error: 'Database error' });
+                }
+
+                if (results.length === 0) {
+                    // No matching user found
+                    res.json({ success: false, error: 'Veterinaire not found' });
+                } else {
+                    const veterinaireId = results[0].veterinaire_id;
+                    res.json({ success: true, user, veterinaireId });
+                }
+            });
+        }
+      }
+    });
+  });
+  
+// Route to fetch saved veterinary information
+app.get('/fetch-veterinary-info/:veterinaireId', (req, res) => {
+    const veterinaireId = req.params.veterinaireId;
+  
+    // Query to retrieve saved veterinary information based on veterinaireId
+    const sqlSelectVeterinaryInfo = `
+      SELECT veterinaire_description, veterinaire_tarif, veterinaire_duree, id_abonnement
+      FROM veterinaire
+      WHERE veterinaire_id = ?
+    `;
+  
+    // Execute the query
+    db.query(sqlSelectVeterinaryInfo, [veterinaireId], (err, results) => {
+      if (err) {
+        console.error('Error fetching veterinary information:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+  
+      if (results.length === 0) {
+        // No saved veterinary information found
+        return res.json({ success: false });
+      }
+  
+      // Send the fetched veterinary information as a JSON response
+      const fetchedInfo = results[0];
+      res.json({
+        success: true,
+        description: fetchedInfo.veterinaire_description,
+        tarif: fetchedInfo.veterinaire_tarif,
+        duree: fetchedInfo.veterinaire_duree,
+        selectedAbonnement: fetchedInfo.id_abonnement,
+      });
+    });
+  });
+  
+// Route to handle saving subscription from Veterinary Dashboard
+app.post('/save-selected-abonnement', (req, res) => {
+    const { id, selectedAbonnement } = req.body;
+  
+    // Check if the required properties are defined
+    if (!id || !selectedAbonnement) {
+        return res.status(400).json({ error: 'Missing id or selectedAbonnement' });
+    }
+
+    // Perform database update or insertion
+    const sqlUpdate = `
+        UPDATE veterinaire
+        SET id_abonnement = ?
+        WHERE veterinaire_id = ?
+    `;
+    // Execute the update query
+    db.query(sqlUpdate, [selectedAbonnement, id], (err, result) => {
+        if (err) {
+            console.error('Error updating data in the database:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        // If no rows were updated, it means the record does not exist
+        if (result.affectedRows === 0) {
+            // Database update unsuccessful
+            console.log('Data not updated in the "veterinaire" table.');
+            res.json({ success: false });
+        } else {
+            // Database update successful
+            console.log('Data updated in the "veterinaire" table.');
+            res.json({ success: true });
+        }
+    });
+});
 
 app.listen(5000, () => { console.log("Server started on port 5000") })

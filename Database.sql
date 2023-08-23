@@ -32,6 +32,7 @@ CREATE TABLE db_pawnation.veterinaire (
   veterinaire_description VARCHAR(255) NOT NULL,
   veterinaire_tarif DECIMAL(10,2) NOT NULL,
   veterinaire_duree TIME NOT NULL,
+  veterinaire_code_postal VARCHAR(5) NOT NULL,
   id_abonnement INT,
   abonnement_date_prelevement DATE,
   abonnement_paye BOOLEAN,

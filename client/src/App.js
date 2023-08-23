@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
+import NavigationBar from './NavigationBar';
 import SignUpAsVeterinary from './SignUpAsVeterinary';
 import VeterinaryDashboard from './VeterinaryDashboard';
+import SubscriptionConfirmation from './SubscriptionConfirmation';
+import SearchContainer from './SearchContainer';
+import Login from './Login';
 
 function App() {
   const [existingAbonnements, setExistingAbonnements] = useState([]);
@@ -20,23 +24,17 @@ function App() {
 
   return (
     <Router>
+       <NavigationBar />
       <div>
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/signup">Sign up as veterinary</Link>
-            </li>
-          </ul>
-        </nav>
         <Routes>
           <Route exact path="/signup" element={<SignUpAsVeterinary />} />
           <Route
             path="/dashboard"
             element={<VeterinaryDashboard username="John" existingAbonnements={existingAbonnements} />}
           />
+          <Route path="/subscription-confirmation" element={<SubscriptionConfirmation />} />
+          <Route exact path="/search" element={<SearchContainer />} />
+          <Route exact path="/login" element={<Login />} />
         </Routes>
       </div>
     </Router>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function VeterinaryDashboard() {
   const [description, setDescription] = useState('');
@@ -8,8 +9,14 @@ function VeterinaryDashboard() {
   const [selectedAbonnement, setSelectedAbonnement] = useState('');
   const [abonnements, setAbonnements] = useState([]);
 
+  const navigate = useNavigate()
+
   const location = useLocation();
   const { username, veterinaireId } = location.state;
+  const handleSubscribe = () => {
+    // Redirect to the subscription confirmation page
+    navigate('/subscription-confirmation');
+  };
 
   useEffect(() => {
     // Fetch existing abonnements from the server
@@ -22,6 +29,27 @@ function VeterinaryDashboard() {
         console.error('Error fetching existing abonnements:', error);
       });
   }, []);
+
+  useEffect(() => {
+    // Fetch saved veterinary information from the server
+    fetch(`/fetch-veterinary-info/${veterinaireId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Set the fetched data to state variables
+          setDescription(data.description);
+          setTarif(data.tarif);
+          setDuree(data.duree);
+          setSelectedAbonnement(data.selectedAbonnement);
+        } else {
+          console.error('Failed to fetch veterinary information');
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching veterinary information:', error);
+      });
+  }, [veterinaireId]); // Run the effect whenever veterinaireId changes
+  
 
   // Handler for profile form submission
   const handleSubmit = (event) => {
@@ -59,6 +87,7 @@ function VeterinaryDashboard() {
     
         // Submit the selectedAbonnement form data to the server for further processing
         const formData = {
+          id: veterinaireId,
           selectedAbonnement: selectedAbonnement,
         };
     
@@ -73,7 +102,11 @@ function VeterinaryDashboard() {
           .then((response) => response.json())
           .then((data) => {
             // Handle the server response (if needed)
-            console.log(data);
+            if (data.success) {
+              navigate('/subscription-confirmation');
+            } else {
+              console.error('Error occurred during selectedAbonnement form submission');
+            }
           })
           .catch((error) => {
             console.error('Error occurred during selectedAbonnement form submission:', error);
