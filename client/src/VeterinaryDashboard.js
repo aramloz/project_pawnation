@@ -7,6 +7,7 @@ function VeterinaryDashboard() {
   const [tarif, setTarif] = useState('');
   const [duree, setDuree] = useState('');
   const [selectedAbonnement, setSelectedAbonnement] = useState('');
+  const [veterinaireCodePostal, setVeterinaireCodePostal] = useState('');
   const [abonnements, setAbonnements] = useState([]);
 
   const navigate = useNavigate()
@@ -40,6 +41,7 @@ function VeterinaryDashboard() {
           setDescription(data.description);
           setTarif(data.tarif);
           setDuree(data.duree);
+          setVeterinaireCodePostal(data.veterinaireCodePostal);
           setSelectedAbonnement(data.selectedAbonnement);
         } else {
           console.error('Failed to fetch veterinary information');
@@ -61,6 +63,7 @@ function VeterinaryDashboard() {
         description: description,
         tarif: tarif,
         duree: duree,
+        veterinaireCodePostal: veterinaireCodePostal,
     };
 
     // Send the form data to the server (you can use fetch or any HTTP client library)
@@ -143,6 +146,15 @@ function VeterinaryDashboard() {
             id="duree"
             value={duree}
             onChange={(e) => setDuree(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="veterinaireCodePostal">Veterinaire Code Postal:</label>
+          <input
+            type="text"
+            id="veterinaireCodePostal"
+            value={veterinaireCodePostal}
+            onChange={(e) => setVeterinaireCodePostal(e.target.value)}
           />
         </div>
         <button type="submit">Save Information</button>

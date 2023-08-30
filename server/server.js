@@ -80,21 +80,21 @@ app.post("/signup", (req, res) => {
 
 // Route to handle saving additional information from Veterinary Dashboard
 app.post('/save-veterinary-info', (req, res) => {
-    const { id, description, tarif, duree } = req.body;
+    const { id, description, tarif, duree, veterinaireCodePostal } = req.body;
   
     // Check if the required properties are defined
-    if (!id || !description || !tarif || !duree) {
+    if (!id || !description || !tarif || !duree || !veterinaireCodePostal) {
         return res.status(400).json({ error: 'Missing required data' });
     }
 
     // Perform database update or insertion
     const sqlUpdate = `
         UPDATE veterinaire
-        SET veterinaire_description = ?, veterinaire_tarif = ?, veterinaire_duree = ?
+        SET veterinaire_description = ?, veterinaire_tarif = ?, veterinaire_duree = ?, veterinaire_code_postal = ?
         WHERE veterinaire_id = ?
     `;
     // Execute the update query
-    db.query(sqlUpdate, [description, tarif, duree, id], (err, result) => {
+    db.query(sqlUpdate, [description, tarif, duree, veterinaireCodePostal, id], (err, result) => {
         if (err) {
             console.error('Error updating data in the database:', err);
             return res.status(500).json({ error: 'Database error' });
@@ -166,7 +166,7 @@ app.get('/fetch-veterinary-info/:veterinaireId', (req, res) => {
   
     // Query to retrieve saved veterinary information based on veterinaireId
     const sqlSelectVeterinaryInfo = `
-      SELECT veterinaire_description, veterinaire_tarif, veterinaire_duree, id_abonnement
+      SELECT veterinaire_description, veterinaire_tarif, veterinaire_duree, veterinaire_code_postal, id_abonnement
       FROM veterinaire
       WHERE veterinaire_id = ?
     `;
@@ -190,6 +190,7 @@ app.get('/fetch-veterinary-info/:veterinaireId', (req, res) => {
         description: fetchedInfo.veterinaire_description,
         tarif: fetchedInfo.veterinaire_tarif,
         duree: fetchedInfo.veterinaire_duree,
+        veterinaireCodePostal: fetchedInfo.veterinaire_code_postal,
         selectedAbonnement: fetchedInfo.id_abonnement,
       });
     });
@@ -228,6 +229,120 @@ app.post('/save-selected-abonnement', (req, res) => {
             res.json({ success: true });
         }
     });
+});
+
+app.get('/search-veterinaires', (req, res) => {
+  const searchQuery = req.query.q;
+
+  const sqlSearch = `
+    SELECT *
+    FROM veterinaire
+    WHERE veterinaire_code_postal = ?
+  `;
+
+  db.query(sqlSearch, [searchQuery], (err, results) => {
+    if (err) {
+      console.error('Error fetching search results:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length !== 0) {
+      const veterinaireIds = results.map((result) => result.id_compte);
+      const sqlFetchCompteEmails = `
+        SELECT compte_email
+        FROM compte
+        WHERE compte_id IN (?)
+      `;
+
+      db.query(sqlFetchCompteEmails, [veterinaireIds], (err, emails) => {
+        if (err) {
+          console.error('Error fetching compte emails:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        // Combine the veterinaire data with compte emails
+        const resultsWithCompteEmails = results.map((result, index) => ({
+          ...result,
+          compte_email: emails[index].compte_email,
+        }));
+
+        const sqlOtherSearch = `
+          SELECT *
+          FROM veterinaire
+          WHERE veterinaire_code_postal != ?
+        `;
+
+        db.query(sqlOtherSearch, [searchQuery], (err, otherResults) => {
+          if (err) {
+            console.error('Error fetching search results:', err);
+            return res.status(500).json({ error: 'Database error' });
+          }
+
+          if (otherResults.length !== 0){
+            const otherVeterinaireIds = otherResults.map((result) => result.id_compte);
+            const sqlFetchOtherCompteEmails = `
+              SELECT compte_email
+              FROM compte
+              WHERE compte_id IN (?)
+            `;
+
+            db.query(sqlFetchOtherCompteEmails, [otherVeterinaireIds], (err, otherEmails) => {
+              if (err) {
+                console.error('Error fetching compte emails:', err);
+                return res.status(500).json({ error: 'Database error' });
+              }
+    
+              const otherResultsWithCompteEmails = otherResults.map((result, index) => ({
+                ...result,
+                compte_email: otherEmails[index].compte_email,
+              }));
+
+              // Combine the two arrays
+              const combinedResults = resultsWithCompteEmails.concat(otherResultsWithCompteEmails);
+
+              res.json(combinedResults);
+            });
+          }
+        });     
+      });
+    } else {
+      const sqlOtherSearch = `
+          SELECT *
+          FROM veterinaire
+          WHERE veterinaire_code_postal != ?
+        `;
+
+      db.query(sqlOtherSearch, [searchQuery], (err, otherResults) => {
+        if (err) {
+          console.error('Error fetching search results:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (otherResults.length !== 0){
+          const otherVeterinaireIds = otherResults.map((result) => result.id_compte);
+          const sqlFetchOtherCompteEmails = `
+            SELECT compte_email
+            FROM compte
+            WHERE compte_id IN (?)
+          `;
+
+          db.query(sqlFetchOtherCompteEmails, [otherVeterinaireIds], (err, otherEmails) => {
+            if (err) {
+              console.error('Error fetching compte emails:', err);
+              return res.status(500).json({ error: 'Database error' });
+            }
+  
+            const otherResultsWithCompteEmails = otherResults.map((result, index) => ({
+              ...result,
+              compte_email: otherEmails[index].compte_email,
+            }));
+
+            res.json(otherResultsWithCompteEmails);
+          });
+        }
+      }); 
+    }
+  });
 });
 
 app.listen(5000, () => { console.log("Server started on port 5000") })
