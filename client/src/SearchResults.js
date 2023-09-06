@@ -24,7 +24,9 @@ function SearchResults() {
       <ul>
         {searchResults.map((veterinaire) => (
           <li key={veterinaire.veterinaire_id}>
-            {veterinaire.compte_email} - {veterinaire.veterinaire_code_postal}
+            <p>Email: {veterinaire.compte_email}</p>
+            <p>Description: {veterinaire.veterinaire_description}</p>
+            <p>Tarif: {veterinaire.veterinaire_tarif}</p>
           </li>
         ))}
       </ul>

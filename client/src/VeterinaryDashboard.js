@@ -10,6 +10,60 @@ function VeterinaryDashboard() {
   const [veterinaireCodePostal, setVeterinaireCodePostal] = useState('');
   const [abonnements, setAbonnements] = useState([]);
 
+  // State variables for days of the week
+  const [monday, setMonday] = useState(false);
+  const [tuesday, setTuesday] = useState(false);
+  const [wednesday, setWednesday] = useState(false);
+  const [thursday, setThursday] = useState(false);
+  const [friday, setFriday] = useState(false);
+  const [saturday, setSaturday] = useState(false);
+  const [sunday, setSunday] = useState(false);
+
+  // State variables for begin and end times
+  const [mondayStartTime, setMondayStartTime] = useState('');
+  const [mondayEndTime, setMondayEndTime] = useState('');
+  const [tuesdayStartTime, setTuesdayStartTime] = useState('');
+  const [tuesdayEndTime, setTuesdayEndTime] = useState('');
+  const [wednesdayStartTime, setWednesdayStartTime] = useState('');
+  const [wednesdayEndTime, setWednesdayEndTime] = useState('');
+  const [thursdayStartTime, setThursdayStartTime] = useState('');
+  const [thursdayEndTime, setThursdayEndTime] = useState('');
+  const [fridayStartTime, setFridayStartTime] = useState('');
+  const [fridayEndTime, setFridayEndTime] = useState('');
+  const [saturdayStartTime, setSaturdayStartTime] = useState('');
+  const [saturdayEndTime, setSaturdayEndTime] = useState('');
+  const [sundayStartTime, setSundayStartTime] = useState('');
+  const [sundayEndTime, setSundayEndTime] = useState('');
+
+  // Handler for day checkboxes
+  const handleDayCheckboxChange = (day, value) => {
+    switch (day) {
+      case 'monday':
+        setMonday(value);
+        break;
+      case 'tuesday':
+        setTuesday(value);
+        break;
+      case 'wednesday':
+        setWednesday(value);
+        break;
+      case 'thursday':
+        setThursday(value);
+        break;
+      case 'friday':
+        setFriday(value);
+        break;
+      case 'saturday':
+        setSaturday(value);
+        break;
+      case 'sunday':
+        setSunday(value);
+        break;
+      default:
+        break;
+    }
+  }
+
   const navigate = useNavigate()
 
   const location = useLocation();
@@ -73,6 +127,47 @@ function VeterinaryDashboard() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(formData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        // Handle the server response (if needed)
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error('Error occurred during form submission:', error);
+      });
+
+    const formDataHoraire = {
+      id: veterinaireId,
+      monday: monday,
+      tuesday: tuesday,
+      wednesday: wednesday,
+      thursday: thursday,
+      friday: friday,
+      saturday: saturday,
+      sunday: sunday,
+      mondayStartTime: mondayStartTime,
+      mondayEndTime: mondayEndTime,
+      tuesdayStartTime: tuesdayStartTime,
+      tuesdayEndTime: tuesdayEndTime,
+      wednesdayStartTime: wednesdayStartTime,
+      wednesdayEndTime: wednesdayEndTime,
+      thursdayStartTime: thursdayStartTime,
+      thursdayEndTime: thursdayEndTime,
+      fridayStartTime: fridayStartTime,
+      fridayEndTime: fridayEndTime,
+      saturdayStartTime: saturdayStartTime,
+      saturdayEndTime: saturdayEndTime,
+      sundayStartTime: sundayStartTime,
+      sundayEndTime: sundayEndTime,
+    };
+
+    fetch('/save-veterinary-horaire', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formDataHoraire),
     })
       .then((response) => response.json())
       .then((data) => {
@@ -156,6 +251,171 @@ function VeterinaryDashboard() {
             value={veterinaireCodePostal}
             onChange={(e) => setVeterinaireCodePostal(e.target.value)}
           />
+        </div>
+        <div>
+          <label>Working Hours:</label>
+          <div>
+            <input
+              type="checkbox"
+              id="monday"
+              checked={monday}
+              onChange={(e) => handleDayCheckboxChange('monday', e.target.checked)}
+            />
+            <label htmlFor="monday">Lundi</label>
+            {monday && (
+              <>
+                <input
+                  type="time"
+                  value={mondayStartTime}
+                  onChange={(e) => setMondayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={mondayEndTime}
+                  onChange={(e) => setMondayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="tuesday"
+              checked={tuesday}
+              onChange={(e) => handleDayCheckboxChange('tuesday', e.target.checked)}
+            />
+            <label htmlFor="tuesday">Mardi</label>
+            {tuesday && (
+              <>
+                <input
+                  type="time"
+                  value={tuesdayStartTime}
+                  onChange={(e) => setTuesdayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={tuesdayEndTime}
+                  onChange={(e) => setTuesdayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="wednesday"
+              checked={wednesday}
+              onChange={(e) => handleDayCheckboxChange('wednesday', e.target.checked)}
+            />
+            <label htmlFor="wednesday">Mercredi</label>
+            {wednesday && (
+              <>
+                <input
+                  type="time"
+                  value={wednesdayStartTime}
+                  onChange={(e) => setWednesdayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={wednesdayEndTime}
+                  onChange={(e) => setWednesdayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="thursday"
+              checked={thursday}
+              onChange={(e) => handleDayCheckboxChange('thursday', e.target.checked)}
+            />
+            <label htmlFor="thursday">Jeudi</label>
+            {thursday && (
+              <>
+                <input
+                  type="time"
+                  value={thursdayStartTime}
+                  onChange={(e) => setThursdayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={thursdayEndTime}
+                  onChange={(e) => setThursdayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="friday"
+              checked={friday}
+              onChange={(e) => handleDayCheckboxChange('friday', e.target.checked)}
+            />
+            <label htmlFor="friday">Vendredi</label>
+            {friday && (
+              <>
+                <input
+                  type="time"
+                  value={fridayStartTime}
+                  onChange={(e) => setFridayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={fridayEndTime}
+                  onChange={(e) => setFridayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="saturday"
+              checked={saturday}
+              onChange={(e) => handleDayCheckboxChange('saturday', e.target.checked)}
+            />
+            <label htmlFor="saturday">Samedi</label>
+            {saturday && (
+              <>
+                <input
+                  type="time"
+                  value={saturdayStartTime}
+                  onChange={(e) => setSaturdayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={saturdayEndTime}
+                  onChange={(e) => setSaturdayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="sunday"
+              checked={sunday}
+              onChange={(e) => handleDayCheckboxChange('sunday', e.target.checked)}
+            />
+            <label htmlFor="sunday">Dimanche</label>
+            {sunday && (
+              <>
+                <input
+                  type="time"
+                  value={sundayStartTime}
+                  onChange={(e) => setSundayStartTime(e.target.value)}
+                />
+                <input
+                  type="time"
+                  value={sundayEndTime}
+                  onChange={(e) => setSundayEndTime(e.target.value)}
+                />
+              </>
+            )}
+          </div>
+          {/* Repeat for the other days of the week... */}
         </div>
         <button type="submit">Save Information</button>
       </form>

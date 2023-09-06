@@ -73,6 +73,34 @@ app.post("/signup", (req, res) => {
 
             // Database insertion into the "veterinaire" table successful
             console.log('Data inserted into the "veterinaire" table.');
+
+            // Define the days for which you want to insert data
+            const daysToInsert = [1, 2, 3, 4, 5, 6, 7]; // Replace with the actual days you need
+
+            // Create placeholders for the values to insert
+            const placeholders = daysToInsert.map(() => '(?, ?, 0)').join(', ');
+
+            // Create an array of values to insert
+            const valuesToInsert = [];
+            daysToInsert.forEach((day) => {
+              valuesToInsert.push(veterinaireId, day);
+            });
+
+            const sqlInsertHoraire = `
+              INSERT INTO horaire (id_veterinaire, horaire_jour, horaire_etat)
+              VALUES ${placeholders}
+            `;
+
+            db.query(sqlInsertHoraire, valuesToInsert, (err, result) => {
+              if (err) {
+                console.error('Error inserting data into the "horaire" table:', err);
+                return res.status(500).json({ error: 'Database error' });
+              }
+            });
+
+            // Database insertion into the "horaire" table successful
+            console.log('Data inserted into the "horaire" table.');
+
             res.json({ success: true, veterinaireId: veterinaireId });
         });
     });
@@ -111,6 +139,77 @@ app.post('/save-veterinary-info', (req, res) => {
             res.json({ success: true });
         }
     });
+});
+
+// Route to handle saving veterinaire horaire information from Veterinary Dashboard
+app.post('/save-veterinary-horaire', (req, res) => {
+  const {
+    id,
+    monday,
+    tuesday,
+    wednesday,
+    thursday,
+    friday,
+    saturday,
+    sunday,
+    mondayStartTime,
+    mondayEndTime,
+    tuesdayStartTime,
+    tuesdayEndTime,
+    wednesdayStartTime,
+    wednesdayEndTime,
+    thursdayStartTime,
+    thursdayEndTime,
+    fridayStartTime,
+    fridayEndTime,
+    saturdayStartTime,
+    saturdayEndTime,
+    sundayStartTime,
+    sundayEndTime
+  } = req.body;
+
+  // Define an array of days of the week and their corresponding start and end times
+  const daysOfWeek = [
+    { day: '1', etat: monday, start: mondayStartTime, end: mondayEndTime },
+    { day: '2', etat: tuesday, start: tuesdayStartTime, end: tuesdayEndTime },
+    { day: '3', etat: wednesday, start: wednesdayStartTime, end: wednesdayEndTime },
+    { day: '4', etat: thursday, start: thursdayStartTime, end: thursdayEndTime },
+    { day: '5', etat: friday, start: fridayStartTime, end: fridayEndTime },
+    { day: '6', etat: saturday, start: saturdayStartTime, end: saturdayEndTime },
+    { day: '7', etat: sunday, start: sundayStartTime, end: sundayEndTime },
+  ];
+  
+
+  // Iterate over each day of the week
+  daysOfWeek.forEach((dayInfo) => {
+    const { day, etat, start, end } = dayInfo;
+
+    // Perform database update or insertion for the current day
+    const sqlUpdate = `
+      UPDATE horaire
+      SET horaire_etat = ?, horaire_debut = ?, horaire_fin = ?
+      WHERE id_veterinaire = ? AND horaire_jour = ?
+    `;
+
+    // Execute the update query
+    db.query(sqlUpdate, [etat, start, end, id, day], (err, result) => {
+      if (err) {
+        console.error(`Error updating data for ${day} in the database:`, err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      // If no rows were updated, it means the record does not exist, so insert a new row
+      if (result.affectedRows === 0) {
+        // Database update unsuccessful
+        console.log(`Data not updated for ${day} in the "veterinaire" table.`);
+        // Handle as needed
+      } else {
+        // Database update successful
+        console.log(`Data updated for ${day} in the "veterinaire" table.`);
+        // Handle as needed
+      }
+    });
+  });
 });
 
 // Route to handle user login
