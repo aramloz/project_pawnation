@@ -104,6 +104,26 @@ function VeterinaryDashboard() {
       .catch((error) => {
         console.error('Error fetching veterinary information:', error);
       });
+      
+    // Fetch saved veterinary horaire from the server
+    fetch(`/fetch-veterinary-horaire/${veterinaireId}`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        // Set the fetched data to state variables
+        setMonday(!!data.monday.etat);
+        setMondayStartTime(data.monday.debut);
+        setMondayEndTime(data.monday.fin);
+        setWednesday(!!data.wednesday.etat);
+        setWednesdayStartTime(data.wednesday.debut);
+        setWednesdayEndTime(data.wednesday.fin);
+      } else {
+        console.error('Failed to fetch veterinary information');
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching veterinary information:', error);
+    });
   }, [veterinaireId]); // Run the effect whenever veterinaireId changes
   
 

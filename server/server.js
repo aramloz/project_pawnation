@@ -294,6 +294,58 @@ app.get('/fetch-veterinary-info/:veterinaireId', (req, res) => {
       });
     });
   });
+
+// Route to fetch saved veterinary horaire
+app.get('/fetch-veterinary-horaire/:veterinaireId', (req, res) => {
+  const veterinaireId = req.params.veterinaireId;
+
+  // Query to retrieve saved veterinary information based on veterinaireId
+  const sqlSelectVeterinaryHoraire = `
+    SELECT horaire_jour, horaire_etat, horaire_debut, horaire_fin
+    FROM horaire
+    WHERE id_veterinaire = ?
+  `;
+
+  // Execute the query
+  db.query(sqlSelectVeterinaryHoraire, [veterinaireId], (err, results) => {
+    if (err) {
+      console.error('Error fetching veterinary horaire:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length !== 7) {
+      // No saved veterinary horaire found
+      return res.json({ success: false });
+    }
+
+    // Create an object to map horaire_jour to days of the week
+    const dayMapping = {
+      1: 'monday',
+      2: 'tuesday',
+      3: 'wednesday',
+      4: 'thursday',
+      5: 'friday',
+      6: 'saturday',
+      7: 'sunday',
+    };
+
+    // Initialize the response object
+    const response = { success: true };
+
+    // Loop through the results and populate the response object
+    results.forEach((result) => {
+      const day = dayMapping[result.horaire_jour];
+      response[day] = {
+        etat: result.horaire_etat,
+        debut: result.horaire_debut,
+        fin: result.horaire_fin,
+      };
+    });
+
+    // Send the populated response as a JSON response
+    res.json(response);
+  });
+});
   
 // Route to handle saving subscription from Veterinary Dashboard
 app.post('/save-selected-abonnement', (req, res) => {
@@ -399,8 +451,76 @@ app.get('/search-veterinaires', (req, res) => {
               // Combine the two arrays
               const combinedResults = resultsWithCompteEmails.concat(otherResultsWithCompteEmails);
 
-              res.json(combinedResults);
+              const allVeterinaireIds = combinedResults.map((result) => result.veterinaire_id);
+              const sqlFetchHoraire = `
+                SELECT id_veterinaire, horaire_jour, horaire_etat, horaire_debut, horaire_fin
+                FROM horaire
+                WHERE id_veterinaire IN (?) 
+              `;
+              
+              db.query(sqlFetchHoraire, [allVeterinaireIds], (err, horaires) => {
+                if (err) {
+                  console.error('Error fetching horaires:', err);
+                  return res.status(500).json({ error: 'Database error' });
+                }
+
+                // Create a map to store horaires by veterinaire_id for faster lookup
+                const horairesMap = new Map();
+                horaires.forEach((horaire) => {
+                  const veterinaireId = horaire.id_veterinaire;
+                  if (!horairesMap.has(veterinaireId)) {
+                    horairesMap.set(veterinaireId, []);
+                  }
+                  horairesMap.get(veterinaireId).push(horaire);
+                });
+
+                // Combine combinedResults with horaires based on veterinaire_id
+                const combinedData = combinedResults.map((result) => ({
+                  ...result,
+                  horaires: horairesMap.get(result.veterinaire_id) || [], // Get the horaires for this veterinaire_id
+                }));
+
+                // Now, combinedData contains the combined information
+                res.json(combinedData);
+              });
+
+              //res.json(combinedResults);
             });
+          } else {
+            const allVeterinaireIds = resultsWithCompteEmails.map((result) => result.veterinaire_id);
+            
+            const sqlFetchHoraire = `
+              SELECT id_veterinaire, horaire_jour, horaire_etat, horaire_debut, horaire_fin
+              FROM horaire
+              WHERE id_veterinaire IN (?) 
+            `;
+            
+            db.query(sqlFetchHoraire, [allVeterinaireIds], (err, horaires) => {
+              if (err) {
+                console.error('Error fetching horaires:', err);
+                return res.status(500).json({ error: 'Database error' });
+              }
+
+              // Create a map to store horaires by veterinaire_id for faster lookup
+              const horairesMap = new Map();
+              horaires.forEach((horaire) => {
+                const veterinaireId = horaire.id_veterinaire;
+                if (!horairesMap.has(veterinaireId)) {
+                  horairesMap.set(veterinaireId, []);
+                }
+                horairesMap.get(veterinaireId).push(horaire);
+              });
+
+              // Combine resultsWithCompteEmails with horaires based on veterinaire_id
+              const combinedData = resultsWithCompteEmails.map((result) => ({
+                ...result,
+                horaires: horairesMap.get(result.veterinaire_id) || [], // Get the horaires for this veterinaire_id
+              }));
+
+              // Now, combinedData contains the combined information
+              res.json(combinedData);
+            });
+            //res.json(resultsWithCompteEmails);
           }
         });     
       });
@@ -436,7 +556,41 @@ app.get('/search-veterinaires', (req, res) => {
               compte_email: otherEmails[index].compte_email,
             }));
 
-            res.json(otherResultsWithCompteEmails);
+            const allVeterinaireIds = otherResultsWithCompteEmails.map((result) => result.veterinaire_id);
+            const sqlFetchHoraire = `
+              SELECT id_veterinaire, horaire_jour, horaire_etat, horaire_debut, horaire_fin
+              FROM horaire
+              WHERE id_veterinaire IN (?) 
+            `;
+            
+            db.query(sqlFetchHoraire, [allVeterinaireIds], (err, horaires) => {
+              if (err) {
+                console.error('Error fetching horaires:', err);
+                return res.status(500).json({ error: 'Database error' });
+              }
+
+              // Create a map to store horaires by veterinaire_id for faster lookup
+              const horairesMap = new Map();
+              horaires.forEach((horaire) => {
+                const veterinaireId = horaire.id_veterinaire;
+                if (!horairesMap.has(veterinaireId)) {
+                  horairesMap.set(veterinaireId, []);
+                }
+                horairesMap.get(veterinaireId).push(horaire);
+              });
+
+              // Combine otherResultsWithCompteEmails with horaires based on veterinaire_id
+              const combinedData = otherResultsWithCompteEmails.map((result) => ({
+                ...result,
+                horaires: horairesMap.get(result.veterinaire_id) || [], // Get the horaires for this veterinaire_id
+              }));
+
+              // Now, combinedData contains the combined information
+              res.json(combinedData);
+
+            });
+
+            //res.json(otherResultsWithCompteEmails);
           });
         }
       }); 
